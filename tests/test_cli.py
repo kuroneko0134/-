@@ -24,7 +24,12 @@ class CliTestCase(unittest.TestCase):
 
     def run_cli(self, *args):
         out, err = io.StringIO(), io.StringIO()
-        argv = ["--offline", "--cache-dir", self.tmp.name, *args]
+        argv = [
+            "--offline",
+            "--cache-dir", self.tmp.name,
+            "--data-dir", str(Path(self.tmp.name) / "mydata"),
+            *args,
+        ]
         with redirect_stdout(out), redirect_stderr(err):
             code = main(argv)
         return code, out.getvalue(), err.getvalue()
@@ -167,3 +172,190 @@ class OfflineWithoutCacheTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MeProfileCommandTests(CliTestCase):
+    def test_setting_and_reading_back_a_profile(self):
+        code, _, _ = self.run_cli("me", "profile", "--name", "くろねこ", "--user-id", "1234", "--rank", "120")
+        self.assertEqual(code, 0)
+        _, out, _ = self.run_cli("me", "profile")
+        self.assertIn("くろねこ", out)
+        self.assertIn("1234", out)
+        self.assertIn("120", out)
+
+    def test_an_empty_profile_says_so_rather_than_failing(self):
+        code, out, _ = self.run_cli("me", "profile")
+        self.assertEqual(code, 0)
+        self.assertIn("未設定", out)
+
+    def test_a_single_field_can_be_updated_without_clearing_the_others(self):
+        self.run_cli("me", "profile", "--name", "くろねこ", "--user-id", "1234")
+        self.run_cli("me", "profile", "--rank", "130")
+        _, out, _ = self.run_cli("--json", "me", "profile")
+        profile = json.loads(out)
+        self.assertEqual((profile["name"], profile["user_id"], profile["rank"]), ("くろねこ", "1234", 130))
+
+
+class MePlayCommandTests(CliTestCase):
+    def test_recording_a_result_by_title(self):
+        code, out, _ = self.run_cli("me", "play", "テオ", "master", "--clear", "fc", "--score", "1180000")
+        self.assertEqual(code, 0)
+        self.assertIn("フルコンボ", out)
+        self.assertIn("1,180,000", out)
+
+    def test_japanese_difficulty_and_clear_names(self):
+        code, out, _ = self.run_cli("me", "play", "ロキ", "マスター", "--clear", "クリア")
+        self.assertEqual(code, 0)
+        self.assertIn("クリア", out)
+
+    def test_a_worse_result_does_not_replace_a_better_one(self):
+        self.run_cli("me", "play", "テオ", "master", "--clear", "ap")
+        _, out, _ = self.run_cli("me", "play", "テオ", "master", "--clear", "clear")
+        self.assertIn("オールパーフェクト", out)
+
+    def test_overwrite_forces_the_new_result(self):
+        self.run_cli("me", "play", "テオ", "master", "--clear", "ap")
+        _, out, _ = self.run_cli("me", "play", "テオ", "master", "--clear", "clear", "--overwrite")
+        self.assertIn("クリア", out)
+        self.assertNotIn("オールパーフェクト", out)
+
+    def test_removing_a_record(self):
+        self.run_cli("me", "play", "テオ", "master", "--clear", "fc")
+        code, out, _ = self.run_cli("me", "play", "テオ", "master", "--remove")
+        self.assertEqual(code, 0)
+        self.assertIn("削除しました", out)
+        code, _, _ = self.run_cli("me", "play", "テオ", "master", "--remove")
+        self.assertEqual(code, 2)
+
+    def test_an_unknown_song_exits_with_code_two(self):
+        code, _, err = self.run_cli("me", "play", "存在しない曲", "master")
+        self.assertEqual(code, 2)
+        self.assertIn("エラー", err)
+
+    def test_an_unknown_difficulty_exits_with_code_two(self):
+        code, _, _ = self.run_cli("me", "play", "テオ", "lunatic")
+        self.assertEqual(code, 2)
+
+    def test_an_unknown_clear_type_exits_with_code_two(self):
+        code, _, _ = self.run_cli("me", "play", "テオ", "master", "--clear", "だいたい")
+        self.assertEqual(code, 2)
+
+
+class MeImportExportCommandTests(CliTestCase):
+    def csv_file(self, text):
+        path = Path(self.tmp.name) / "plays.csv"
+        path.write_text(text, encoding="utf-8")
+        return str(path)
+
+    def test_importing_a_japanese_csv(self):
+        path = self.csv_file("曲名,難易度,クリア,スコア\nテオ,マスター,fc,1180000\nロキ,master,クリア,980000\n")
+        code, out, _ = self.run_cli("me", "import", path)
+        self.assertEqual(code, 0)
+        self.assertIn("2 件", out)
+
+    def test_imported_records_come_back_out_of_export(self):
+        path = self.csv_file("music,difficulty,clear\nテオ,master,ap\n")
+        self.run_cli("me", "import", path)
+        _, out, _ = self.run_cli("me", "export", "--csv")
+        self.assertIn("テオ", out)
+        self.assertIn("all_perfect", out)
+
+    def test_export_as_json_carries_the_schema_version(self):
+        _, out, _ = self.run_cli("me", "export")
+        self.assertEqual(json.loads(out)["version"], 1)
+
+    def test_a_broken_csv_reports_the_line_and_exits_one(self):
+        path = self.csv_file("music,difficulty\nテオ,lunatic\n")
+        code, _, err = self.run_cli("me", "import", path)
+        self.assertEqual(code, 1)
+        self.assertIn("line 2", err)
+
+
+class MeProgressCommandTests(CliTestCase):
+    def test_progress_table_lists_every_level(self):
+        self.run_cli("me", "play", "テオ", "master", "--clear", "fc")
+        code, out, _ = self.run_cli("me", "progress", "--difficulty", "master")
+        self.assertEqual(code, 0)
+        self.assertIn("32", out)
+        self.assertIn("100%", out)
+
+    def test_progress_as_json(self):
+        _, out, _ = self.run_cli("--json", "me", "progress", "--difficulty", "master")
+        rows = json.loads(out)
+        self.assertEqual([row["level"] for row in rows], [26, 29, 32])
+
+    def test_todo_hides_what_is_already_done(self):
+        self.run_cli("me", "play", "テオ", "master", "--clear", "fc")
+        code, out, _ = self.run_cli("me", "todo", "--goal", "fc", "--difficulty", "master")
+        self.assertEqual(code, 0)
+        self.assertNotIn("テオ", out)
+        self.assertIn("ロキ", out)
+
+    def test_todo_is_empty_once_everything_is_cleared(self):
+        for title in ("Tell Your World", "ロキ", "テオ"):
+            self.run_cli("me", "play", title, "master", "--clear", "ap")
+        code, out, _ = self.run_cli("me", "todo", "--goal", "ap", "--difficulty", "master")
+        self.assertEqual(code, 0)
+        self.assertIn("すべて達成済み", out)
+
+    def test_todo_rejects_an_unknown_goal(self):
+        code, _, _ = self.run_cli("me", "todo", "--goal", "そこそこ")
+        self.assertEqual(code, 2)
+
+
+class MeCardCommandTests(CliTestCase):
+    def test_registering_a_card_then_seeing_it_as_owned(self):
+        code, out, _ = self.run_cli("me", "card", "88", "--level", "60", "--master-rank", "5", "--trained")
+        self.assertEqual(code, 0)
+        self.assertIn("登録しました", out)
+        _, listing, _ = self.run_cli("me", "cards", "ミク")
+        self.assertIn("○ #88", listing)
+
+    def test_the_owned_count_is_shown(self):
+        self.run_cli("me", "card", "88")
+        _, out, _ = self.run_cli("me", "cards", "ミク")
+        self.assertIn("1 / 8 枚", out)
+
+    def test_removing_a_card(self):
+        self.run_cli("me", "card", "88")
+        code, out, _ = self.run_cli("me", "card", "88", "--remove")
+        self.assertEqual(code, 0)
+        self.assertIn("外しました", out)
+        code, _, _ = self.run_cli("me", "card", "88", "--remove")
+        self.assertEqual(code, 2)
+
+    def test_a_card_outside_the_master_data_is_refused(self):
+        code, _, err = self.run_cli("me", "card", "999999")
+        self.assertEqual(code, 2)
+        self.assertIn("マスターデータ", err)
+
+    def test_cards_can_be_filtered_by_rarity(self):
+        _, out, _ = self.run_cli("--json", "me", "cards", "ミク", "--rarity", "4")
+        payload = json.loads(out)
+        self.assertEqual([c["id"] for c in payload["missing"]], [88])
+        self.assertEqual(payload["owned"], [])
+
+
+class MeEventCommandTests(CliTestCase):
+    def test_pace_for_a_named_event(self):
+        code, out, _ = self.run_cli(
+            "me", "event", "--event-id", "1", "--points", "250000", "--target", "1000000"
+        )
+        self.assertEqual(code, 0)
+        self.assertIn("750,000", out)
+
+    def test_reaching_the_target_is_reported(self):
+        code, out, _ = self.run_cli(
+            "me", "event", "--event-id", "1", "--points", "1000000", "--target", "1000000"
+        )
+        self.assertEqual(code, 0)
+        self.assertIn("達成済み", out)
+
+    def test_an_unknown_event_exits_with_code_two(self):
+        code, _, _ = self.run_cli("me", "event", "--event-id", "99999", "--points", "0", "--target", "1")
+        self.assertEqual(code, 2)
+
+    def test_without_a_running_event_it_says_so(self):
+        code, _, err = self.run_cli("me", "event", "--points", "0", "--target", "1")
+        self.assertEqual(code, 2)
+        self.assertIn("開催中のイベント", err)

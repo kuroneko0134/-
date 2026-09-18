@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
-__all__ = ["CacheEntry", "TableCache", "default_cache_dir"]
+__all__ = ["CacheEntry", "TableCache", "default_cache_dir", "atomic_write_text"]
 
 
 def default_cache_dir() -> Path:
@@ -73,8 +73,8 @@ class TableCache:
     def write(self, table: str, payload: Any, etag: Optional[str] = None) -> CacheEntry:
         self.dir.mkdir(parents=True, exist_ok=True)
         fetched_at = time.time()
-        _atomic_write(self._data_path(table), json.dumps(payload, ensure_ascii=False))
-        _atomic_write(
+        atomic_write_text(self._data_path(table), json.dumps(payload, ensure_ascii=False))
+        atomic_write_text(
             self._meta_path(table),
             json.dumps({"etag": etag, "fetched_at": fetched_at}, ensure_ascii=False),
         )
@@ -95,7 +95,8 @@ class TableCache:
         return removed
 
 
-def _atomic_write(path: Path, text: str) -> None:
+def atomic_write_text(path: Path, text: str) -> None:
+    """Write a file in one step, so a crash never leaves a half-written table."""
     fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=path.name, suffix=".tmp")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:

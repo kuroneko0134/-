@@ -7,13 +7,17 @@ import json
 import logging
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, List, Optional, Sequence
 
 from . import __version__
 from .client import DEFAULT_TTL, ProsekaClient
+from .collection import Collection
 from .errors import ProsekaError
 from .models import Card, Character, Event, Music, Unit
+from .play import ClearType, OwnedCard, PlayerProfile, PlayRecord, parse_difficulty
 from .regions import DEFAULT_REGION, REGIONS
+from .store import PlayerStore, parse_play_csv, write_play_csv
 
 __all__ = ["main", "build_parser"]
 
@@ -28,6 +32,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--region", default=DEFAULT_REGION, choices=sorted(REGIONS), help="サーバー地域 (既定: jp)"
     )
     parser.add_argument("--cache-dir", default=None, help="キャッシュの保存先")
+    parser.add_argument("--data-dir", default=None, help="自分のプレイデータの保存先")
     parser.add_argument("--ttl", type=float, default=DEFAULT_TTL, help="キャッシュ有効秒数")
     parser.add_argument("--offline", action="store_true", help="通信せずキャッシュだけを使う")
     parser.add_argument("--refresh", action="store_true", help="キャッシュを無視して再取得する")
@@ -65,6 +70,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_event = sub.add_parser("event", help="イベント情報を表示する")
     p_event.add_argument("--id", type=int, default=None, help="イベント ID")
     p_event.add_argument("--recent", type=int, default=None, help="直近 N 件を表示する")
+
+    _add_me_parser(sub)
 
     p_cache = sub.add_parser("cache", help="キャッシュを操作する")
     p_cache.add_argument("action", choices=["path", "clear"], help="path: 場所を表示 / clear: 削除")
@@ -108,6 +115,7 @@ def _dispatch(args: argparse.Namespace) -> int:
         "level": _cmd_level,
         "cards": _cmd_cards,
         "event": _cmd_event,
+        "me": _cmd_me,
         "cache": _cmd_cache,
     }
     return handlers[args.command](client, args)
@@ -297,3 +305,296 @@ def _date(moment: Optional[datetime]) -> str:
 
 def _emit(payload: Any) -> None:
     print(json.dumps(payload, ensure_ascii=False, indent=2))
+
+
+# --------------------------------------------------- 自分のプレイデータ (me)
+
+
+def _add_me_parser(sub: "argparse._SubParsersAction") -> None:
+    """``me`` groups everything that touches your own records."""
+    p_me = sub.add_parser("me", help="スマホのアプリで見た自分の記録を扱う")
+    actions = p_me.add_subparsers(dest="me_action", required=True)
+
+    p_profile = actions.add_parser("profile", help="プロフィールを表示・登録する")
+    p_profile.add_argument("--name", default=None, help="プレイヤー名")
+    p_profile.add_argument("--user-id", default=None, help="ID (プロフィール画面の数字)")
+    p_profile.add_argument("--rank", type=int, default=None, help="ランク")
+
+    p_play = actions.add_parser("play", help="譜面の結果を記録する")
+    p_play.add_argument("song", help="曲名または楽曲 ID")
+    p_play.add_argument("difficulty", help="easy/normal/hard/expert/master/append")
+    p_play.add_argument("--clear", default="clear", help="未クリア/クリア/fc/ap")
+    p_play.add_argument("--score", type=int, default=None, help="スコア")
+    p_play.add_argument("--overwrite", action="store_true", help="良い記録でも上書きする")
+    p_play.add_argument("--remove", action="store_true", help="記録を削除する")
+
+    p_import = actions.add_parser("import", help="CSV から結果をまとめて取り込む")
+    p_import.add_argument("path", help="CSV ファイル (- で標準入力)")
+    p_import.add_argument("--overwrite", action="store_true", help="良い記録でも上書きする")
+
+    p_export = actions.add_parser("export", help="記録を書き出す")
+    p_export.add_argument("--csv", action="store_true", help="CSV で出力する")
+
+    p_progress = actions.add_parser("progress", help="難易度ごとの達成状況を表示する")
+    p_progress.add_argument("--difficulty", default="master", help="対象の難易度")
+
+    p_todo = actions.add_parser("todo", help="目標に届いていない譜面を一覧する")
+    p_todo.add_argument("--goal", default="full_combo", help="clear/fc/ap")
+    p_todo.add_argument("--difficulty", default="master", help="対象の難易度")
+    p_todo.add_argument("--level", type=int, default=None, help="譜面レベル")
+    p_todo.add_argument("--limit", type=int, default=20, help="表示件数")
+
+    p_cards = actions.add_parser("cards", help="所持カードと未所持カードを比べる")
+    p_cards.add_argument("character", help="キャラクター名または ID")
+    p_cards.add_argument("--rarity", default=None, help="4, 4*, birthday など")
+
+    p_card = actions.add_parser("card", help="所持カードを登録・削除する")
+    p_card.add_argument("card_id", type=int, help="カード ID")
+    p_card.add_argument("--level", type=int, default=None, help="カードレベル")
+    p_card.add_argument("--master-rank", type=int, default=0, help="マスターランク")
+    p_card.add_argument("--trained", action="store_true", help="特訓後")
+    p_card.add_argument("--remove", action="store_true", help="所持カードから外す")
+
+    p_event = actions.add_parser("event", help="イベントポイントの進捗とペースを出す")
+    p_event.add_argument("--points", type=int, required=True, help="現在のポイント")
+    p_event.add_argument("--target", type=int, required=True, help="目標ポイント")
+    p_event.add_argument("--event-id", type=int, default=None, help="対象イベント (既定: 開催中)")
+
+
+def _cmd_me(client: ProsekaClient, args: argparse.Namespace) -> int:
+    store = PlayerStore.open(args.region, data_dir=args.data_dir)
+    collection = Collection(client, store)
+    handlers = {
+        "profile": _me_profile,
+        "play": _me_play,
+        "import": _me_import,
+        "export": _me_export,
+        "progress": _me_progress,
+        "todo": _me_todo,
+        "cards": _me_cards,
+        "card": _me_card,
+        "event": _me_event,
+    }
+    return handlers[args.me_action](collection, args)
+
+
+def _me_profile(collection: Collection, args: argparse.Namespace) -> int:
+    store = collection.store
+    if any(value is not None for value in (args.name, args.user_id, args.rank)):
+        current = store.profile
+        store.profile = PlayerProfile(
+            name=args.name if args.name is not None else current.name,
+            user_id=args.user_id if args.user_id is not None else current.user_id,
+            rank=args.rank if args.rank is not None else current.rank,
+        )
+        store.save()
+    profile = store.profile
+    if args.as_json:
+        _emit(profile.to_dict())
+        return 0
+    print(f"プレイヤー : {profile.name or '(未設定)'}")
+    print(f"ID         : {profile.user_id or '(未設定)'}")
+    print(f"ランク     : {profile.rank if profile.rank is not None else '(未設定)'}")
+    print(f"記録       : {len(store)} 譜面 / 所持カード {len(store.cards)} 枚")
+    print(f"保存先     : {store.path}")
+    return 0
+
+
+def _me_play(collection: Collection, args: argparse.Namespace) -> int:
+    try:
+        music_id = collection.resolve_music_id(args.song)
+        difficulty = parse_difficulty(args.difficulty)
+    except ValueError as exc:
+        print(f"エラー: {exc}", file=sys.stderr)
+        return 2
+    store = collection.store
+    music = collection.client.music(music_id)
+
+    if args.remove:
+        removed = store.remove_record(music_id, difficulty)
+        store.save()
+        print(f"{'削除しました' if removed else '記録がありません'}: {music.title} [{difficulty}]")
+        return 0 if removed else 2
+
+    try:
+        clear = ClearType.parse(args.clear)
+    except ValueError as exc:
+        print(f"エラー: {exc}", file=sys.stderr)
+        return 2
+    saved = store.set_record(
+        PlayRecord(music_id=music_id, difficulty=difficulty, clear=clear, score=args.score),
+        keep_best=not args.overwrite,
+    )
+    store.save()
+    if args.as_json:
+        _emit(saved.to_dict())
+        return 0
+    score = f" / {saved.score:,} 点" if saved.score is not None else ""
+    print(f"記録しました: {music.title} [{difficulty}] {saved.clear.label}{score}")
+    return 0
+
+
+def _me_import(collection: Collection, args: argparse.Namespace) -> int:
+    text = sys.stdin.read() if args.path == "-" else Path(args.path).read_text(encoding="utf-8")
+    records = parse_play_csv(text, collection.resolve_music_id)
+    store = collection.store
+    for record in records:
+        store.set_record(record, keep_best=not args.overwrite)
+    store.save()
+    if args.as_json:
+        _emit({"imported": len(records), "total": len(store)})
+        return 0
+    print(f"{len(records)} 件を取り込みました (記録は合計 {len(store)} 譜面)")
+    return 0
+
+
+def _me_export(collection: Collection, args: argparse.Namespace) -> int:
+    store = collection.store
+    records = store.sorted_records()
+    if args.csv:
+        sys.stdout.write(write_play_csv(records, collection.titles(records)))
+        return 0
+    _emit(store.to_dict())
+    return 0
+
+
+def _me_progress(collection: Collection, args: argparse.Namespace) -> int:
+    summaries = collection.level_summary(args.difficulty)
+    if not summaries:
+        print("対象の譜面がありません", file=sys.stderr)
+        return 2
+    if args.as_json:
+        _emit(
+            [
+                {
+                    "level": s.level,
+                    "total": s.total,
+                    "cleared": s.cleared,
+                    "full_combo": s.full_combo,
+                    "all_perfect": s.all_perfect,
+                }
+                for s in summaries
+            ]
+        )
+        return 0
+    print(f"{args.difficulty.upper()} の達成状況")
+    print(f"{'Lv':>3}  {'曲数':>4}  {'クリア':>8}  {'フルコン':>8}  {'AP':>8}")
+    for summary in summaries:
+        print(
+            f"{summary.level:>3}  {summary.total:>4}  "
+            f"{summary.cleared:>4} ({summary.rate(ClearType.CLEAR):>4.0%})  "
+            f"{summary.full_combo:>4} ({summary.rate(ClearType.FULL_COMBO):>4.0%})  "
+            f"{summary.all_perfect:>4} ({summary.rate(ClearType.ALL_PERFECT):>4.0%})"
+        )
+    return 0
+
+
+def _me_todo(collection: Collection, args: argparse.Namespace) -> int:
+    try:
+        goal = ClearType.parse(args.goal)
+    except ValueError as exc:
+        print(f"エラー: {exc}", file=sys.stderr)
+        return 2
+    rows = collection.todo(goal, difficulty=args.difficulty, level=args.level)
+    if not rows:
+        print("すべて達成済みです")
+        return 0
+    if args.as_json:
+        _emit(
+            [
+                {
+                    "music_id": row.music.id,
+                    "title": row.music.title,
+                    "difficulty": row.chart.difficulty,
+                    "play_level": row.chart.play_level,
+                    "clear": row.clear.code,
+                }
+                for row in rows[: max(1, args.limit)]
+            ]
+        )
+        return 0
+    print(f"{goal.label}まで残り {len(rows)} 譜面")
+    for row in rows[: max(1, args.limit)]:
+        print(f"  {row.chart.label:<10} {row.clear.label:<10} {row.music.title}")
+    if len(rows) > args.limit:
+        print(f"  ... 他 {len(rows) - args.limit} 件")
+    return 0
+
+
+def _me_cards(collection: Collection, args: argparse.Namespace) -> int:
+    matches = _resolve_characters(collection.client, args.character)
+    if not matches:
+        print(f"該当するキャラクターが見つかりません: {args.character}", file=sys.stderr)
+        return 2
+    character = matches[0]
+    owned, missing = collection.card_collection(character, rarity=args.rarity)
+    if args.as_json:
+        _emit({"owned": [c.raw for c in owned], "missing": [c.raw for c in missing]})
+        return 0
+    total = len(owned) + len(missing)
+    print(f"{character.full_name}: {len(owned)} / {total} 枚")
+    for card in owned:
+        print(f"  ○ #{card.id:<5} {card.rarity_stars:<5} {card.prefix}")
+    for card in missing:
+        print(f"  ・#{card.id:<5} {card.rarity_stars:<5} {card.prefix}")
+    return 0
+
+
+def _me_card(collection: Collection, args: argparse.Namespace) -> int:
+    store = collection.store
+    card = collection.client.card(args.card_id)
+    if card is None:
+        print(f"カード #{args.card_id} はマスターデータにありません", file=sys.stderr)
+        return 2
+    if args.remove:
+        removed = store.remove_card(args.card_id)
+        store.save()
+        print(f"{'外しました' if removed else '所持していません'}: #{card.id} {card.prefix}")
+        return 0 if removed else 2
+    store.set_card(
+        OwnedCard(
+            card_id=card.id,
+            level=args.level,
+            master_rank=args.master_rank,
+            special_training=args.trained,
+        )
+    )
+    store.save()
+    print(f"登録しました: #{card.id} {card.rarity_stars} {card.prefix}")
+    return 0
+
+
+def _me_event(collection: Collection, args: argparse.Namespace) -> int:
+    event = collection.client.event(args.event_id) if args.event_id else None
+    if args.event_id and event is None:
+        print(f"イベント #{args.event_id} が見つかりません", file=sys.stderr)
+        return 2
+    pace = collection.event_pace(args.points, args.target, event=event)
+    if pace is None:
+        print("開催中のイベントがありません", file=sys.stderr)
+        return 2
+    if args.as_json:
+        _emit(
+            {
+                "event": pace.event.name,
+                "points": pace.points,
+                "target": pace.target,
+                "remaining": pace.remaining,
+                "hours_left": round(pace.hours_left, 2),
+                "points_per_hour": None if pace.points_per_hour is None else round(pace.points_per_hour),
+            }
+        )
+        return 0
+    print(f"{pace.event.name} ({_date(pace.event.start_at)} 〜 {_date(pace.ends_at)})")
+    print(f"  現在     : {pace.points:,} pt")
+    print(f"  目標     : {pace.target:,} pt")
+    if pace.reached:
+        print("  達成済みです")
+        return 0
+    print(f"  残り     : {pace.remaining:,} pt / {pace.hours_left:.1f} 時間")
+    per_hour = pace.points_per_hour
+    if per_hour is None:
+        print("  集計が終了しているため間に合いません")
+    else:
+        print(f"  必要ペース: {per_hour:,.0f} pt/時")
+    return 0
