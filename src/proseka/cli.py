@@ -344,6 +344,15 @@ def _add_me_parser(sub: "argparse._SubParsersAction") -> None:
     p_todo.add_argument("--level", type=int, default=None, help="譜面レベル")
     p_todo.add_argument("--limit", type=int, default=20, help="表示件数")
 
+    p_mark = actions.add_parser("mark", help="クリア済みの譜面をまとめて記録する")
+    p_mark.add_argument("--difficulty", default="master", help="対象の難易度")
+    p_mark.add_argument("--clear", default="clear", help="記録する結果 (クリア/fc/ap)")
+    p_mark.add_argument("--level", type=int, default=None, help="このレベルだけ")
+    p_mark.add_argument("--min-level", type=int, default=None, help="このレベル以上")
+    p_mark.add_argument("--max-level", type=int, default=None, help="このレベル以下")
+    p_mark.add_argument("--overwrite", action="store_true", help="良い記録も書き換える")
+    p_mark.add_argument("--dry-run", action="store_true", help="保存せず対象だけ表示する")
+
     p_cards = actions.add_parser("cards", help="所持カードと未所持カードを比べる")
     p_cards.add_argument("character", help="キャラクター名または ID")
     p_cards.add_argument("--rarity", default=None, help="4, 4*, birthday など")
@@ -371,6 +380,7 @@ def _cmd_me(client: ProsekaClient, args: argparse.Namespace) -> int:
         "export": _me_export,
         "progress": _me_progress,
         "todo": _me_todo,
+        "mark": _me_mark,
         "cards": _me_cards,
         "card": _me_card,
         "event": _me_event,
@@ -518,6 +528,59 @@ def _me_todo(collection: Collection, args: argparse.Namespace) -> int:
         print(f"  {row.chart.label:<10} {row.clear.label:<10} {row.music.title}")
     if len(rows) > args.limit:
         print(f"  ... 他 {len(rows) - args.limit} 件")
+    return 0
+
+
+def _me_mark(collection: Collection, args: argparse.Namespace) -> int:
+    """Bulk-record play you have already done. It does not play anything."""
+    try:
+        result = collection.mark_all(
+            args.clear,
+            difficulty=args.difficulty,
+            level=args.level,
+            min_level=args.min_level,
+            max_level=args.max_level,
+            overwrite=args.overwrite,
+            dry_run=args.dry_run,
+        )
+    except ValueError as exc:
+        print(f"エラー: {exc}", file=sys.stderr)
+        return 2
+    if not result.total:
+        print("対象の譜面がありません", file=sys.stderr)
+        return 2
+    if not args.dry_run:
+        collection.store.save()
+    if args.as_json:
+        _emit(
+            {
+                "clear": result.clear.code,
+                "total": result.total,
+                "changed": result.changed_count,
+                "unchanged": result.unchanged_count,
+                "dry_run": result.dry_run,
+                "charts": [
+                    {
+                        "music_id": row.music.id,
+                        "title": row.music.title,
+                        "difficulty": row.chart.difficulty,
+                        "play_level": row.chart.play_level,
+                    }
+                    for row in result.changed
+                ],
+            }
+        )
+        return 0
+    verb = "記録する予定" if result.dry_run else "記録しました"
+    print(f"{args.difficulty.upper()} {result.total} 譜面のうち {result.changed_count} 件を{verb} ({result.clear.label})")
+    for row in result.changed[:5]:
+        print(f"  {row.chart.label:<10} {row.music.title}")
+    if result.changed_count > 5:
+        print(f"  ... 他 {result.changed_count - 5} 件")
+    if result.unchanged_count:
+        print(f"  すでに同等以上: {result.unchanged_count} 件")
+    if result.dry_run:
+        print("  --dry-run のため保存していません")
     return 0
 
 

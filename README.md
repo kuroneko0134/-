@@ -48,6 +48,27 @@ CSV は日本語ヘッダーでも英語ヘッダーでも読めます。曲は 
 
 同じ譜面をもう一度記録しても、**前より悪い結果では上書きされません**（`--overwrite` で強制できます）。
 
+### まとめて記録する
+
+「MASTER は全部クリア済み」のように広い範囲が埋まっている場合は、一括で記録できます。これは**すでにプレイした結果を書き留める機能**です。ゲーム内で譜面をクリアするものではありません。
+
+```bash
+proseka me mark --difficulty master --dry-run          # 対象を確認するだけ
+proseka me mark --difficulty master --clear clear      # MASTER 全曲をクリア済みに
+proseka me mark --difficulty master --max-level 30     # レベル 30 以下だけ
+proseka me mark --difficulty master --clear fc --level 26
+```
+
+```
+$ proseka me mark --difficulty master --clear clear
+MASTER 716 譜面のうち 716 件を記録しました (クリア)
+  MASTER 25  25時の情熱
+  MASTER 25  余花にみとれて
+  ... 他 714 件
+```
+
+すでに同等以上の記録がある譜面は触りません。`--dry-run` を付けると保存せずに対象だけ表示します。
+
 ### 記録を使う
 
 ```bash
@@ -206,7 +227,7 @@ sekai = ProsekaClient("en", ttl=60 * 60)          # 1 時間キャッシュ
 python3 run_tests.py
 ```
 
-185 個のテストはすべて同梱のフィクスチャと擬似トランスポートで動くため、ネットワークに接続しません。
+203 個のテストはすべて同梱のフィクスチャと擬似トランスポートで動くため、ネットワークに接続しません。
 
 ## ライセンス
 

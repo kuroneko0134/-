@@ -16,7 +16,7 @@ from .models import Card, Character, Event, Music, MusicDifficulty
 from .play import ClearType, PlayRecord, parse_difficulty
 from .store import PlayerStore
 
-__all__ = ["Collection", "ChartProgress", "LevelSummary", "EventPace"]
+__all__ = ["Collection", "ChartProgress", "LevelSummary", "EventPace", "MarkResult"]
 
 
 @dataclass(frozen=True)
@@ -63,6 +63,24 @@ class LevelSummary:
             ClearType.ALL_PERFECT: self.all_perfect,
         }.get(goal, self.cleared)
         return done / self.total
+
+
+@dataclass(frozen=True)
+class MarkResult:
+    """What a bulk marking run did, or would have done in a dry run."""
+
+    total: int
+    changed: Tuple[ChartProgress, ...]
+    clear: ClearType
+    dry_run: bool = False
+
+    @property
+    def changed_count(self) -> int:
+        return len(self.changed)
+
+    @property
+    def unchanged_count(self) -> int:
+        return self.total - len(self.changed)
 
 
 @dataclass(frozen=True)
@@ -150,6 +168,42 @@ class Collection:
         rows = [row for row in self.chart_progress(difficulty=difficulty, level=level) if not row.reached(wanted)]
         rows.sort(key=lambda row: (-int(row.clear), row.chart.play_level, row.music.id))
         return rows
+
+    def mark_all(
+        self,
+        clear: Union[ClearType, str] = ClearType.CLEAR,
+        *,
+        difficulty: Optional[str] = None,
+        level: Optional[int] = None,
+        min_level: Optional[int] = None,
+        max_level: Optional[int] = None,
+        overwrite: bool = False,
+        dry_run: bool = False,
+    ) -> MarkResult:
+        """Record the same result for every chart matching the filters.
+
+        This writes down play you have already done. It does not play
+        anything. Charts already at or above the result are left alone unless
+        ``overwrite`` is set, and ``dry_run`` reports without writing.
+        """
+        wanted = ClearType.parse(clear)
+        rows = self.chart_progress(difficulty=difficulty, level=level)
+        if min_level is not None:
+            rows = [row for row in rows if row.chart.play_level >= int(min_level)]
+        if max_level is not None:
+            rows = [row for row in rows if row.chart.play_level <= int(max_level)]
+
+        changed: List[ChartProgress] = []
+        for row in rows:
+            if not overwrite and row.clear >= wanted:
+                continue
+            if not dry_run:
+                self.store.set_record(
+                    PlayRecord(music_id=row.music.id, difficulty=row.chart.difficulty, clear=wanted),
+                    keep_best=not overwrite,
+                )
+            changed.append(row)
+        return MarkResult(total=len(rows), changed=tuple(changed), clear=wanted, dry_run=dry_run)
 
     def level_summary(self, difficulty: str = "master") -> List[LevelSummary]:
         """Per-level progress for one difficulty, lowest level first."""

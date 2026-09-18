@@ -8,7 +8,7 @@ not affiliated with SEGA, Colorful Palette or Crypton Future Media.
 from __future__ import annotations
 
 from .client import CORE_TABLES, DEFAULT_TTL, ProsekaClient
-from .collection import ChartProgress, Collection, EventPace, LevelSummary
+from .collection import ChartProgress, Collection, EventPace, LevelSummary, MarkResult
 from .errors import OfflineError, ProsekaError, TableNotFound, TransportError
 from .models import Card, Character, Event, Music, MusicDifficulty, Unit
 from .play import ClearType, OwnedCard, PlayerProfile, PlayRecord, parse_difficulty
@@ -31,6 +31,7 @@ __all__ = [
     "Collection",
     "ChartProgress",
     "LevelSummary",
+    "MarkResult",
     "EventPace",
     "PlayerStore",
     "PlayerProfile",

@@ -203,3 +203,67 @@ class ResolveMusicTests(CollectionTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MarkAllTests(CollectionTestCase):
+    """Bulk marking writes down play already done; it never plays anything."""
+
+    def test_marking_every_master_chart_as_cleared(self):
+        result = self.collection.mark_all("clear", difficulty="master")
+        self.assertEqual((result.total, result.changed_count), (3, 3))
+        self.assertEqual(self.collection.clear_counts(difficulty="master")["clear"], 3)
+
+    def test_running_it_twice_changes_nothing_the_second_time(self):
+        self.collection.mark_all("clear", difficulty="master")
+        again = self.collection.mark_all("clear", difficulty="master")
+        self.assertEqual((again.changed_count, again.unchanged_count), (0, 3))
+
+    def test_a_better_existing_record_is_kept(self):
+        self.record(3, "master", "ap")
+        self.collection.mark_all("clear", difficulty="master")
+        self.assertIs(self.store.record(3, "master").clear, ClearType.ALL_PERFECT)
+
+    def test_overwrite_lowers_a_better_record_when_asked(self):
+        self.record(3, "master", "ap")
+        result = self.collection.mark_all("clear", difficulty="master", overwrite=True)
+        self.assertEqual(result.changed_count, 3)
+        self.assertIs(self.store.record(3, "master").clear, ClearType.CLEAR)
+
+    def test_marking_a_higher_goal_upgrades_existing_records(self):
+        self.collection.mark_all("clear", difficulty="master")
+        result = self.collection.mark_all("fc", difficulty="master")
+        self.assertEqual(result.changed_count, 3)
+        self.assertIs(self.store.record(2, "master").clear, ClearType.FULL_COMBO)
+
+    def test_a_dry_run_writes_nothing(self):
+        result = self.collection.mark_all("clear", difficulty="master", dry_run=True)
+        self.assertEqual(result.changed_count, 3)
+        self.assertTrue(result.dry_run)
+        self.assertEqual(len(self.store), 0)
+
+    def test_level_filters_narrow_the_target(self):
+        self.assertEqual(self.collection.mark_all("clear", difficulty="master", level=29).total, 1)
+        self.assertEqual(
+            self.collection.mark_all("clear", difficulty="master", max_level=29, dry_run=True).total, 2
+        )
+        self.assertEqual(
+            self.collection.mark_all("clear", difficulty="master", min_level=29, dry_run=True).total, 2
+        )
+
+    def test_a_level_range_can_be_bounded_on_both_sides(self):
+        result = self.collection.mark_all(
+            "clear", difficulty="master", min_level=27, max_level=30, dry_run=True
+        )
+        self.assertEqual([row.chart.play_level for row in result.changed], [29])
+
+    def test_marking_other_difficulties_leaves_master_alone(self):
+        self.collection.mark_all("clear", difficulty="append")
+        self.assertEqual(self.collection.clear_counts(difficulty="master")["not_cleared"], 3)
+
+    def test_an_unknown_clear_type_is_rejected(self):
+        with self.assertRaises(ValueError):
+            self.collection.mark_all("だいたいクリア", difficulty="master")
+
+    def test_an_unknown_difficulty_is_rejected(self):
+        with self.assertRaises(ValueError):
+            self.collection.mark_all("clear", difficulty="lunatic")

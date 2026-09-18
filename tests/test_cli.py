@@ -359,3 +359,45 @@ class MeEventCommandTests(CliTestCase):
         code, _, err = self.run_cli("me", "event", "--points", "0", "--target", "1")
         self.assertEqual(code, 2)
         self.assertIn("開催中のイベント", err)
+
+
+class MeMarkCommandTests(CliTestCase):
+    def test_marking_every_master_chart_then_progress_reads_full(self):
+        code, out, _ = self.run_cli("me", "mark", "--difficulty", "master", "--clear", "clear")
+        self.assertEqual(code, 0)
+        self.assertIn("3 件を記録しました", out)
+        _, progress, _ = self.run_cli("--json", "me", "progress", "--difficulty", "master")
+        self.assertTrue(all(row["cleared"] == row["total"] for row in json.loads(progress)))
+
+    def test_a_dry_run_reports_without_saving(self):
+        code, out, _ = self.run_cli("me", "mark", "--difficulty", "master", "--dry-run")
+        self.assertEqual(code, 0)
+        self.assertIn("保存していません", out)
+        _, export, _ = self.run_cli("me", "export")
+        self.assertEqual(json.loads(export)["plays"], [])
+
+    def test_the_second_run_reports_nothing_left_to_do(self):
+        self.run_cli("me", "mark", "--difficulty", "master")
+        _, out, _ = self.run_cli("me", "mark", "--difficulty", "master")
+        self.assertIn("すでに同等以上: 3 件", out)
+
+    def test_a_level_range_limits_what_is_marked(self):
+        _, out, _ = self.run_cli(
+            "--json", "me", "mark", "--difficulty", "master", "--max-level", "29"
+        )
+        payload = json.loads(out)
+        self.assertEqual(payload["total"], 2)
+        self.assertEqual(sorted(row["play_level"] for row in payload["charts"]), [26, 29])
+
+    def test_full_combo_can_be_marked_too(self):
+        _, out, _ = self.run_cli("me", "mark", "--difficulty", "master", "--clear", "fc")
+        self.assertIn("フルコンボ", out)
+
+    def test_an_unknown_difficulty_exits_with_code_two(self):
+        code, _, err = self.run_cli("me", "mark", "--difficulty", "lunatic")
+        self.assertEqual(code, 2)
+        self.assertIn("エラー", err)
+
+    def test_an_unknown_clear_type_exits_with_code_two(self):
+        code, _, _ = self.run_cli("me", "mark", "--clear", "だいたい")
+        self.assertEqual(code, 2)
