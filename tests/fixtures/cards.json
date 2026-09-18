@@ -1,0 +1,419 @@
+[
+ {
+  "id": 1,
+  "seq": 10,
+  "characterId": 1,
+  "cardRarityType": "rarity_1",
+  "specialTrainingPower1BonusFixed": 0,
+  "specialTrainingPower2BonusFixed": 0,
+  "specialTrainingPower3BonusFixed": 0,
+  "attr": "cool",
+  "supportUnit": "none",
+  "skillId": 1,
+  "cardSkillName": "足元の小さな花",
+  "prefix": "クールだけど友達想い",
+  "assetbundleName": "res001_no001",
+  "gachaPhrase": "-",
+  "flavorText": "フレーバーテキスト",
+  "releaseAt": 1601391600000,
+  "archivePublishedAt": 1233284400000,
+  "cardSupplyId": 1,
+  "specialTrainingCosts": [],
+  "masterLessonAchieveResources": [
+   {
+    "releaseConditionId": 8,
+    "cardId": 1,
+    "masterRank": 1,
+    "resources": []
+   }
+  ],
+  "initialSpecialTrainingStatus": "not_doing"
+ },
+ {
+  "id": 2,
+  "seq": 20,
+  "characterId": 1,
+  "cardRarityType": "rarity_2",
+  "specialTrainingPower1BonusFixed": 0,
+  "specialTrainingPower2BonusFixed": 0,
+  "specialTrainingPower3BonusFixed": 0,
+  "attr": "happy",
+  "supportUnit": "none",
+  "skillId": 2,
+  "cardSkillName": "精一杯の韻を踏んで",
+  "prefix": "Leo/need",
+  "assetbundleName": "res001_no002",
+  "gachaPhrase": "-",
+  "flavorText": "フレーバーテキスト",
+  "releaseAt": 1601391600000,
+  "archivePublishedAt": 1233284400000,
+  "cardSupplyId": 1,
+  "specialTrainingCosts": [],
+  "masterLessonAchieveResources": [],
+  "initialSpecialTrainingStatus": "not_doing"
+ },
+ {
+  "id": 3,
+  "seq": 30,
+  "characterId": 1,
+  "cardRarityType": "rarity_3",
+  "specialTrainingPower1BonusFixed": 300,
+  "specialTrainingPower2BonusFixed": 300,
+  "specialTrainingPower3BonusFixed": 300,
+  "attr": "mysterious",
+  "supportUnit": "none",
+  "skillId": 6,
+  "cardSkillName": "踏み出した一歩",
+  "prefix": "見上げる先に",
+  "assetbundleName": "res001_no003",
+  "gachaPhrase": "……すごいな、ミクは",
+  "flavorText": "フレーバーテキスト",
+  "releaseAt": 1601391600000,
+  "archivePublishedAt": 1233284400000,
+  "cardSupplyId": 1,
+  "specialTrainingCosts": [
+   {
+    "cardId": 3,
+    "seq": 1,
+    "cost": {
+     "resourceId": 10,
+     "resourceType": "material",
+     "resourceLevel": 0,
+     "quantity": 100
+    }
+   },
+   {
+    "cardId": 3,
+    "seq": 2,
+    "cost": {
+     "resourceId": 14,
+     "resourceType": "material",
+     "resourceLevel": 0,
+     "quantity": 50
+    }
+   }
+  ],
+  "masterLessonAchieveResources": [],
+  "initialSpecialTrainingStatus": "not_doing"
+ },
+ {
+  "id": 4,
+  "seq": 40,
+  "characterId": 1,
+  "cardRarityType": "rarity_4",
+  "specialTrainingPower1BonusFixed": 400,
+  "specialTrainingPower2BonusFixed": 400,
+  "specialTrainingPower3BonusFixed": 400,
+  "attr": "cute",
+  "supportUnit": "none",
+  "skillId": 10,
+  "cardSkillName": "不安を拭い去って",
+  "prefix": "夜明け前の語らい",
+  "assetbundleName": "res001_no004",
+  "gachaPhrase": "聞いてくれてありがとう、ミク",
+  "flavorText": "フレーバーテキスト",
+  "releaseAt": 1601391600000,
+  "archivePublishedAt": 1233284400000,
+  "cardSupplyId": 1,
+  "specialTrainingCosts": [
+   {
+    "cardId": 4,
+    "seq": 1,
+    "cost": {
+     "resourceId": 6,
+     "resourceType": "material",
+     "resourceLevel": 0,
+     "quantity": 200
+    }
+   },
+   {
+    "cardId": 4,
+    "seq": 2,
+    "cost": {
+     "resourceId": 14,
+     "resourceType": "material",
+     "resourceLevel": 0,
+     "quantity": 100
+    }
+   }
+  ],
+  "masterLessonAchieveResources": [
+   {
+    "releaseConditionId": 60010,
+    "cardId": 4,
+    "masterRank": 0,
+    "resources": []
+   },
+   {
+    "releaseConditionId": 60011,
+    "cardId": 4,
+    "masterRank": 1,
+    "resources": []
+   },
+   {
+    "releaseConditionId": 60012,
+    "cardId": 4,
+    "masterRank": 3,
+    "resources": []
+   },
+   {
+    "releaseConditionId": 60013,
+    "cardId": 4,
+    "masterRank": 5,
+    "resources": []
+   }
+  ],
+  "initialSpecialTrainingStatus": "not_doing"
+ },
+ {
+  "id": 81,
+  "seq": 810,
+  "characterId": 21,
+  "cardRarityType": "rarity_1",
+  "specialTrainingPower1BonusFixed": 0,
+  "specialTrainingPower2BonusFixed": 0,
+  "specialTrainingPower3BonusFixed": 0,
+  "attr": "cute",
+  "supportUnit": "none",
+  "skillId": 1,
+  "cardSkillName": "一緒に楽しもうね！",
+  "prefix": "誰もが知る歌姫",
+  "assetbundleName": "res021_no001",
+  "gachaPhrase": "-",
+  "flavorText": "フレーバーテキスト",
+  "releaseAt": 1601391600000,
+  "archivePublishedAt": 1233284400000,
+  "cardSupplyId": 1,
+  "specialTrainingCosts": [],
+  "masterLessonAchieveResources": [],
+  "initialSpecialTrainingStatus": "not_doing"
+ },
+ {
+  "id": 82,
+  "seq": 820,
+  "characterId": 21,
+  "cardRarityType": "rarity_2",
+  "specialTrainingPower1BonusFixed": 0,
+  "specialTrainingPower2BonusFixed": 0,
+  "specialTrainingPower3BonusFixed": 0,
+  "attr": "cute",
+  "supportUnit": "light_sound",
+  "skillId": 2,
+  "cardSkillName": "なんだか頼られてる気分",
+  "prefix": "教室のセカイ",
+  "assetbundleName": "res021_no002",
+  "gachaPhrase": "-",
+  "flavorText": "フレーバーテキスト",
+  "releaseAt": 1601391600000,
+  "archivePublishedAt": 1233284400000,
+  "cardSupplyId": 1,
+  "specialTrainingCosts": [],
+  "masterLessonAchieveResources": [],
+  "initialSpecialTrainingStatus": "not_doing"
+ },
+ {
+  "id": 83,
+  "seq": 830,
+  "characterId": 21,
+  "cardRarityType": "rarity_2",
+  "specialTrainingPower1BonusFixed": 0,
+  "specialTrainingPower2BonusFixed": 0,
+  "specialTrainingPower3BonusFixed": 0,
+  "attr": "cool",
+  "supportUnit": "idol",
+  "skillId": 2,
+  "cardSkillName": "ポテンシャルは無限大！",
+  "prefix": "ステージのセカイ",
+  "assetbundleName": "res021_no003",
+  "gachaPhrase": "-",
+  "flavorText": "フレーバーテキスト",
+  "releaseAt": 1601391600000,
+  "archivePublishedAt": 1233284400000,
+  "cardSupplyId": 1,
+  "specialTrainingCosts": [],
+  "masterLessonAchieveResources": [],
+  "initialSpecialTrainingStatus": "not_doing"
+ },
+ {
+  "id": 84,
+  "seq": 840,
+  "characterId": 21,
+  "cardRarityType": "rarity_2",
+  "specialTrainingPower1BonusFixed": 0,
+  "specialTrainingPower2BonusFixed": 0,
+  "specialTrainingPower3BonusFixed": 0,
+  "attr": "pure",
+  "supportUnit": "street",
+  "skillId": 8,
+  "cardSkillName": "私達にも大切だから",
+  "prefix": "ストリートのセカイ",
+  "assetbundleName": "res021_no004",
+  "gachaPhrase": "-",
+  "flavorText": "フレーバーテキスト",
+  "releaseAt": 1601391600000,
+  "archivePublishedAt": 1233284400000,
+  "cardSupplyId": 1,
+  "specialTrainingCosts": [],
+  "masterLessonAchieveResources": [],
+  "initialSpecialTrainingStatus": "not_doing"
+ },
+ {
+  "id": 85,
+  "seq": 850,
+  "characterId": 21,
+  "cardRarityType": "rarity_2",
+  "specialTrainingPower1BonusFixed": 0,
+  "specialTrainingPower2BonusFixed": 0,
+  "specialTrainingPower3BonusFixed": 0,
+  "attr": "happy",
+  "supportUnit": "theme_park",
+  "skillId": 5,
+  "cardSkillName": "無邪気なアドリブ",
+  "prefix": "ワンダーランドのセカイ",
+  "assetbundleName": "res021_no005",
+  "gachaPhrase": "-",
+  "flavorText": "フレーバーテキスト",
+  "releaseAt": 1601391600000,
+  "archivePublishedAt": 1233284400000,
+  "cardSupplyId": 1,
+  "specialTrainingCosts": [],
+  "masterLessonAchieveResources": [],
+  "initialSpecialTrainingStatus": "not_doing"
+ },
+ {
+  "id": 86,
+  "seq": 860,
+  "characterId": 21,
+  "cardRarityType": "rarity_2",
+  "specialTrainingPower1BonusFixed": 0,
+  "specialTrainingPower2BonusFixed": 0,
+  "specialTrainingPower3BonusFixed": 0,
+  "attr": "mysterious",
+  "supportUnit": "school_refusal",
+  "skillId": 2,
+  "cardSkillName": "嬉しいはくすぐったい",
+  "prefix": "誰もいないセカイ",
+  "assetbundleName": "res021_no006",
+  "gachaPhrase": "-",
+  "flavorText": "フレーバーテキスト",
+  "releaseAt": 1601391600000,
+  "archivePublishedAt": 1233284400000,
+  "cardSupplyId": 1,
+  "specialTrainingCosts": [],
+  "masterLessonAchieveResources": [],
+  "initialSpecialTrainingStatus": "not_doing"
+ },
+ {
+  "id": 87,
+  "seq": 870,
+  "characterId": 21,
+  "cardRarityType": "rarity_3",
+  "specialTrainingPower1BonusFixed": 300,
+  "specialTrainingPower2BonusFixed": 300,
+  "specialTrainingPower3BonusFixed": 300,
+  "attr": "pure",
+  "supportUnit": "school_refusal",
+  "skillId": 9,
+  "cardSkillName": "会いに行かなくちゃ",
+  "prefix": "見守るまなざし",
+  "assetbundleName": "res021_no007",
+  "gachaPhrase": "早く、見つけてあげて……",
+  "flavorText": "フレーバーテキスト",
+  "releaseAt": 1601391600000,
+  "archivePublishedAt": 1233284400000,
+  "cardSupplyId": 1,
+  "specialTrainingCosts": [
+   {
+    "cardId": 87,
+    "seq": 1,
+    "cost": {
+     "resourceId": 8,
+     "resourceType": "material",
+     "resourceLevel": 0,
+     "quantity": 100
+    }
+   },
+   {
+    "cardId": 87,
+    "seq": 2,
+    "cost": {
+     "resourceId": 14,
+     "resourceType": "material",
+     "resourceLevel": 0,
+     "quantity": 50
+    }
+   }
+  ],
+  "masterLessonAchieveResources": [],
+  "initialSpecialTrainingStatus": "not_doing"
+ },
+ {
+  "id": 88,
+  "seq": 880,
+  "characterId": 21,
+  "cardRarityType": "rarity_4",
+  "specialTrainingPower1BonusFixed": 400,
+  "specialTrainingPower2BonusFixed": 400,
+  "specialTrainingPower3BonusFixed": 400,
+  "attr": "cute",
+  "supportUnit": "idol",
+  "skillId": 4,
+  "cardSkillName": "さあ、ステージへ！",
+  "prefix": "みんなにお披露目",
+  "assetbundleName": "res021_no008",
+  "gachaPhrase": "今日のステージ一緒に出ようよ！",
+  "flavorText": "フレーバーテキスト",
+  "releaseAt": 1601391600000,
+  "archivePublishedAt": 1233284400000,
+  "cardSupplyId": 1,
+  "specialTrainingCosts": [
+   {
+    "cardId": 88,
+    "seq": 1,
+    "cost": {
+     "resourceId": 6,
+     "resourceType": "material",
+     "resourceLevel": 0,
+     "quantity": 200
+    }
+   },
+   {
+    "cardId": 88,
+    "seq": 2,
+    "cost": {
+     "resourceId": 14,
+     "resourceType": "material",
+     "resourceLevel": 0,
+     "quantity": 100
+    }
+   }
+  ],
+  "masterLessonAchieveResources": [
+   {
+    "releaseConditionId": 60020,
+    "cardId": 88,
+    "masterRank": 0,
+    "resources": []
+   },
+   {
+    "releaseConditionId": 60021,
+    "cardId": 88,
+    "masterRank": 1,
+    "resources": []
+   },
+   {
+    "releaseConditionId": 60022,
+    "cardId": 88,
+    "masterRank": 3,
+    "resources": []
+   },
+   {
+    "releaseConditionId": 60023,
+    "cardId": 88,
+    "masterRank": 5,
+    "resources": []
+   }
+  ],
+  "initialSpecialTrainingStatus": "not_doing"
+ }
+]

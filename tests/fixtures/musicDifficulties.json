@@ -1,0 +1,121 @@
+[
+ {
+  "id": 1,
+  "musicId": 1,
+  "musicDifficulty": "easy",
+  "playLevel": 5,
+  "totalNoteCount": 220
+ },
+ {
+  "id": 2,
+  "musicId": 1,
+  "musicDifficulty": "normal",
+  "playLevel": 10,
+  "totalNoteCount": 492
+ },
+ {
+  "id": 3,
+  "musicId": 1,
+  "musicDifficulty": "hard",
+  "playLevel": 16,
+  "totalNoteCount": 719
+ },
+ {
+  "id": 4,
+  "musicId": 1,
+  "musicDifficulty": "expert",
+  "playLevel": 22,
+  "totalNoteCount": 961
+ },
+ {
+  "id": 5,
+  "musicId": 1,
+  "musicDifficulty": "master",
+  "playLevel": 26,
+  "totalNoteCount": 1147
+ },
+ {
+  "id": 6,
+  "musicId": 2,
+  "musicDifficulty": "easy",
+  "playLevel": 7,
+  "totalNoteCount": 166
+ },
+ {
+  "id": 7,
+  "musicId": 2,
+  "musicDifficulty": "normal",
+  "playLevel": 11,
+  "totalNoteCount": 296
+ },
+ {
+  "id": 8,
+  "musicId": 2,
+  "musicDifficulty": "hard",
+  "playLevel": 17,
+  "totalNoteCount": 635
+ },
+ {
+  "id": 9,
+  "musicId": 2,
+  "musicDifficulty": "expert",
+  "playLevel": 24,
+  "totalNoteCount": 827
+ },
+ {
+  "id": 10,
+  "musicId": 2,
+  "musicDifficulty": "master",
+  "playLevel": 29,
+  "totalNoteCount": 975
+ },
+ {
+  "id": 11,
+  "musicId": 3,
+  "musicDifficulty": "easy",
+  "playLevel": 9,
+  "totalNoteCount": 135
+ },
+ {
+  "id": 12,
+  "musicId": 3,
+  "musicDifficulty": "normal",
+  "playLevel": 14,
+  "totalNoteCount": 477
+ },
+ {
+  "id": 13,
+  "musicId": 3,
+  "musicDifficulty": "hard",
+  "playLevel": 19,
+  "totalNoteCount": 681
+ },
+ {
+  "id": 14,
+  "musicId": 3,
+  "musicDifficulty": "expert",
+  "playLevel": 27,
+  "totalNoteCount": 997
+ },
+ {
+  "id": 15,
+  "musicId": 3,
+  "musicDifficulty": "master",
+  "playLevel": 32,
+  "totalNoteCount": 1221
+ },
+ {
+  "id": 4001,
+  "musicId": 1,
+  "musicDifficulty": "append",
+  "playLevel": 25,
+  "totalNoteCount": 1353
+ },
+ {
+  "id": 4090,
+  "musicId": 2,
+  "musicDifficulty": "append",
+  "playLevel": 28,
+  "totalNoteCount": 1040
+ }
+]
