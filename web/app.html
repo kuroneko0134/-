@@ -1,0 +1,623 @@
+<title>セカイ譜面ノート</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root {
+    --ground: #f4f2fa;
+    --surface: #ffffff;
+    --surface-2: #ece9f7;
+    --ink: #1b1a26;
+    --muted: #6b6784;
+    --line: #ded9ef;
+    --accent: #6247d8;
+    --accent-soft: #e7e2fb;
+    --none: #c3bed8;
+    --clear: #1f9e85;
+    --fc: #d4870f;
+    --ap: #d2418a;
+    --clear-soft: #d6f1ea;
+    --fc-soft: #fbeacf;
+    --ap-soft: #fbdcec;
+    --shadow: 0 1px 2px rgba(27, 26, 38, .06), 0 8px 24px -16px rgba(27, 26, 38, .3);
+    --jp: "Zen Kaku Gothic New", -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #121121;
+      --surface: #1b1a2c;
+      --surface-2: #232138;
+      --ink: #eeecf8;
+      --muted: #9b97b8;
+      --line: #2e2b46;
+      --accent: #9b8bf5;
+      --accent-soft: #2b2650;
+      --none: #46426a;
+      --clear: #3ecfad;
+      --fc: #f2ab3c;
+      --ap: #f472ab;
+      --clear-soft: #16362f;
+      --fc-soft: #3a2c13;
+      --ap-soft: #3c1a2c;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px -18px rgba(0, 0, 0, .8);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #121121;
+    --surface: #1b1a2c;
+    --surface-2: #232138;
+    --ink: #eeecf8;
+    --muted: #9b97b8;
+    --line: #2e2b46;
+    --accent: #9b8bf5;
+    --accent-soft: #2b2650;
+    --none: #46426a;
+    --clear: #3ecfad;
+    --fc: #f2ab3c;
+    --ap: #f472ab;
+    --clear-soft: #16362f;
+    --fc-soft: #3a2c13;
+    --ap-soft: #3c1a2c;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px -18px rgba(0, 0, 0, .8);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--jp);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+  }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  .wrap { max-width: 720px; margin: 0 auto; padding-inline: 16px; }
+
+  header.top {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+    background: color-mix(in srgb, var(--ground) 92%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .brand { display: flex; align-items: baseline; gap: 10px; padding-block: 12px 8px; }
+  .brand h1 { font-size: 17px; font-weight: 700; margin: 0; letter-spacing: .02em; }
+  .brand .sub { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .04em; }
+
+  .tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: 0 0 auto; border: 1px solid var(--line); background: var(--surface);
+    border-radius: 999px; padding: 6px 13px; font-family: var(--mono);
+    font-size: 12px; font-weight: 600; letter-spacing: .06em; cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .meter { padding-bottom: 12px; display: grid; gap: 8px; }
+  .bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: var(--surface-2); }
+  .bar span { display: block; transition: width .25s ease; }
+  .bar .s1 { background: var(--clear); }
+  .bar .s2 { background: var(--fc); }
+  .bar .s3 { background: var(--ap); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+  .legend b { font-family: var(--mono); font-size: 13px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .legend i { width: 8px; height: 8px; border-radius: 3px; display: inline-block; margin-right: 5px; }
+
+  .tools { display: flex; flex-wrap: wrap; gap: 8px; padding-block: 12px; align-items: center; }
+  .search {
+    flex: 1 1 180px; min-width: 0; border: 1px solid var(--line); background: var(--surface);
+    border-radius: 10px; padding: 8px 12px; font: inherit; font-size: 14px; color: var(--ink);
+  }
+  .search::placeholder { color: var(--muted); }
+  .chip {
+    border: 1px solid var(--line); background: var(--surface); border-radius: 10px;
+    padding: 8px 12px; font-size: 13px; cursor: pointer; white-space: nowrap;
+  }
+  .chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+  select.chip { appearance: none; font-family: var(--mono); font-size: 12px; }
+
+  main { padding-bottom: 92px; }
+  .level { margin-bottom: 22px; }
+  .level-head {
+    display: flex; align-items: center; gap: 10px; padding: 10px 0 8px;
+    border-bottom: 1px solid var(--line); margin-bottom: 6px;
+  }
+  .level-no { font-family: var(--mono); font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
+  .level-no small { font-size: 11px; color: var(--muted); margin-right: 3px; }
+  .level-stat { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .level-bar { flex: 1 1 auto; min-width: 40px; }
+  .fill-btn {
+    border: 1px solid var(--line); background: transparent; border-radius: 8px;
+    padding: 4px 9px; font-size: 11px; color: var(--muted); cursor: pointer; white-space: nowrap;
+  }
+  .fill-btn.armed { border-color: var(--ap); color: var(--ap); font-weight: 700; }
+
+  .rows { display: grid; gap: 4px; }
+  .row {
+    display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 10px;
+    width: 100%; text-align: left; border: 1px solid var(--line); background: var(--surface);
+    border-radius: 10px; padding: 9px 12px 9px 9px; cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .row:hover { border-color: var(--accent); }
+  .row .badge {
+    font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: .04em;
+    text-align: center; border-radius: 6px; padding: 4px 0; background: var(--surface-2); color: var(--muted);
+  }
+  .row .title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+  .row .notes { font-family: var(--mono); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .row[data-clear="1"] { background: var(--clear-soft); border-color: transparent; }
+  .row[data-clear="1"] .badge { background: var(--clear); color: #fff; }
+  .row[data-clear="2"] { background: var(--fc-soft); border-color: transparent; }
+  .row[data-clear="2"] .badge { background: var(--fc); color: #fff; }
+  .row[data-clear="3"] { background: var(--ap-soft); border-color: transparent; }
+  .row[data-clear="3"] .badge { background: var(--ap); color: #fff; }
+
+  .empty { color: var(--muted); font-size: 14px; padding: 40px 0; text-align: center; }
+
+  footer.bottom {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    background: color-mix(in srgb, var(--ground) 94%, transparent);
+    backdrop-filter: blur(12px); border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .bottom-in { display: flex; align-items: center; gap: 10px; padding-block: 10px; }
+  .sync { flex: 1 1 auto; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .sync b { color: var(--clear); }
+  .btn {
+    border: 1px solid var(--accent); background: var(--accent); color: #fff;
+    border-radius: 10px; padding: 8px 14px; font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+  .btn.ghost { background: transparent; color: var(--accent); }
+
+  .sheet { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 16px; background: rgba(12, 11, 22, .55); }
+  .sheet[hidden] { display: none; }
+  .sheet-card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    box-shadow: var(--shadow); width: min(560px, 100%); max-height: 80vh; overflow: auto; padding: 18px;
+  }
+  .sheet-card h2 { margin: 0 0 6px; font-size: 16px; }
+  .sheet-card p { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+  .sheet-card textarea {
+    width: 100%; height: 190px; font-family: var(--mono); font-size: 11px; line-height: 1.45;
+    border: 1px solid var(--line); border-radius: 10px; padding: 10px; background: var(--ground); color: var(--ink);
+  }
+  .sheet-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <h1>セカイ譜面ノート</h1>
+      <span class="sub" id="stamp">読み込み中</span>
+    </div>
+    <div class="tabs" id="tabs" role="tablist" aria-label="難易度"></div>
+    <div class="meter">
+      <div class="bar" aria-hidden="true"><span class="s1" id="barClear"></span><span class="s2" id="barFc"></span><span class="s3" id="barAp"></span></div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="tools">
+    <input class="search" id="q" type="search" placeholder="曲名・読み・作者で絞り込み" autocomplete="off">
+    <button class="chip" id="todoToggle" aria-pressed="false">未達成のみ</button>
+    <select class="chip" id="levelPick" aria-label="レベル"></select>
+    <button class="chip" id="sortToggle" aria-pressed="false">Lv&nbsp;↑</button>
+  </div>
+  <main id="list"><p class="empty">譜面データを読み込んでいます…</p></main>
+</div>
+
+<footer class="bottom">
+  <div class="wrap bottom-in">
+    <span class="sync" id="sync">端末内に保存中</span>
+    <button class="btn ghost" id="exportBtn">CSV</button>
+  </div>
+</footer>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <h2 id="sheetTitle">CSV 書き出し</h2>
+    <p>コマンドライン版の <span style="font-family:var(--mono)">proseka me import</span> にそのまま渡せます。</p>
+    <textarea id="csv" readonly></textarea>
+    <div class="sheet-actions">
+      <button class="btn ghost" id="copyBtn">コピー</button>
+      <button class="btn ghost" id="saveBtn" hidden>保存</button>
+      <button class="btn" id="closeBtn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var DIFF_ORDER = ["easy", "normal", "hard", "expert", "master", "append"];
+  var DIFF_SHORT = { easy: "EASY", normal: "NORM", hard: "HARD", expert: "EXP", master: "MAS", append: "APD" };
+  var CLEAR_CODES = ["not_cleared", "clear", "full_combo", "all_perfect"];
+  var CLEAR_BADGE = ["未", "C", "FC", "AP"];
+  var CLEAR_NAME = ["未クリア", "クリア", "フルコンボ", "オールパーフェクト"];
+  var LS_KEY = "sekai-fumen-note/v1";
+
+  var data = null;
+  var index = {};
+  var clears = {};
+  var view = { diff: "master", q: "", todoOnly: false, level: "all", desc: false };
+  var db = null;
+  var pending = {};
+  var armedLevel = null;
+
+  var el = {
+    tabs: document.getElementById("tabs"),
+    legend: document.getElementById("legend"),
+    barClear: document.getElementById("barClear"),
+    barFc: document.getElementById("barFc"),
+    barAp: document.getElementById("barAp"),
+    list: document.getElementById("list"),
+    q: document.getElementById("q"),
+    todo: document.getElementById("todoToggle"),
+    levelPick: document.getElementById("levelPick"),
+    sort: document.getElementById("sortToggle"),
+    sync: document.getElementById("sync"),
+    stamp: document.getElementById("stamp"),
+    sheet: document.getElementById("sheet"),
+    csv: document.getElementById("csv"),
+    exportBtn: document.getElementById("exportBtn"),
+    copyBtn: document.getElementById("copyBtn"),
+    saveBtn: document.getElementById("saveBtn"),
+    closeBtn: document.getElementById("closeBtn")
+  };
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  function readLocal() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      return raw ? (JSON.parse(raw) || {}) : {};
+    } catch (e) { return {}; }
+  }
+
+  function writeLocal() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(clears)); } catch (e) { /* private mode */ }
+  }
+
+  function normalize(s) {
+    return String(s == null ? "" : s).normalize("NFKC").toLowerCase().replace(/\s+/g, "");
+  }
+
+  function buildIndex() {
+    DIFF_ORDER.forEach(function (d) { index[d] = { charts: [], levels: [] }; });
+    data.songs.forEach(function (song) {
+      var hay = normalize(song.t + " " + (song.r || "") + " " + (song.c || ""));
+      song.d.forEach(function (row) {
+        var diff = data.difficulties[row[0]];
+        if (!index[diff]) return;
+        index[diff].charts.push({ id: song.i, title: song.t, credit: song.c || "", notes: row[2], level: row[1], hay: hay });
+      });
+    });
+    DIFF_ORDER.forEach(function (d) {
+      var seen = {};
+      index[d].charts.forEach(function (c) { seen[c.level] = true; });
+      index[d].levels = Object.keys(seen).map(Number).sort(function (a, b) { return a - b; });
+      index[d].charts.sort(function (a, b) { return a.level - b.level || a.id - b.id; });
+    });
+  }
+
+  function clearOf(diff, id) {
+    var bucket = clears[diff];
+    return (bucket && bucket[id]) || 0;
+  }
+
+  function setClear(diff, id, value) {
+    if (!clears[diff]) clears[diff] = {};
+    if (value) clears[diff][id] = value; else delete clears[diff][id];
+    writeLocal();
+    queueSync(diff);
+  }
+
+  /* ---------------------------------------------------------------- sync */
+
+  function queueSync(diff) {
+    if (!db) return;
+    if (pending[diff]) clearTimeout(pending[diff]);
+    pending[diff] = setTimeout(function () {
+      pending[diff] = null;
+      db.doc("records/" + diff).set({ clears: clears[diff] || {}, updatedAt: new Date().toISOString() })
+        .then(function () { setSync("同期済み", true); })
+        .catch(function () { setSync("端末内のみ保存", false); });
+    }, 600);
+  }
+
+  function setSync(text, good) {
+    el.sync.innerHTML = good ? "<b>" + esc(text) + "</b>" : esc(text);
+  }
+
+  function mergeRemote(diff, remote) {
+    var mine = clears[diff] || {};
+    var merged = {};
+    var changedLocal = false, changedRemote = false;
+    var keys = {};
+    Object.keys(mine).forEach(function (k) { keys[k] = true; });
+    Object.keys(remote || {}).forEach(function (k) { keys[k] = true; });
+    Object.keys(keys).forEach(function (k) {
+      var best = Math.max(Number(mine[k]) || 0, Number((remote || {})[k]) || 0);
+      if (best) merged[k] = best;
+      if ((Number(mine[k]) || 0) !== best) changedLocal = true;
+      if ((Number((remote || {})[k]) || 0) !== best) changedRemote = true;
+    });
+    clears[diff] = merged;
+    if (changedLocal) { writeLocal(); render(); }
+    if (changedRemote) queueSync(diff);
+  }
+
+  function connect() {
+    if (!window.claude || !window.claude.use) return;
+    window.claude.use("db").then(function (store) {
+      if (!store) return;
+      db = store;
+      setSync("同期中…", false);
+      DIFF_ORDER.forEach(function (diff) {
+        db.doc("records/" + diff).onSnapshot(function (snap) {
+          var body = snap.exists ? (snap.data() || {}) : {};
+          mergeRemote(diff, body.clears || {});
+          setSync("同期済み", true);
+        }, function () { setSync("端末内のみ保存", false); });
+      });
+    });
+  }
+
+  /* -------------------------------------------------------------- render */
+
+  function visibleCharts() {
+    var charts = index[view.diff].charts;
+    var q = normalize(view.q);
+    var out = [];
+    for (var i = 0; i < charts.length; i++) {
+      var c = charts[i];
+      if (view.level !== "all" && c.level !== Number(view.level)) continue;
+      if (q && c.hay.indexOf(q) === -1) continue;
+      if (view.todoOnly && clearOf(view.diff, c.id) > 0) continue;
+      out.push(c);
+    }
+    return out;
+  }
+
+  function countsFor(charts) {
+    var n = [0, 0, 0, 0];
+    charts.forEach(function (c) { n[clearOf(view.diff, c.id)]++; });
+    return n;
+  }
+
+  function renderTabs() {
+    el.tabs.innerHTML = DIFF_ORDER.map(function (d) {
+      var total = index[d].charts.length;
+      return '<button class="tab" role="tab" data-diff="' + d + '" aria-selected="' + (d === view.diff) +
+        '">' + DIFF_SHORT[d] + " " + total + "</button>";
+    }).join("");
+  }
+
+  function renderLevelPick() {
+    var levels = index[view.diff].levels;
+    el.levelPick.innerHTML = '<option value="all">Lv 全部</option>' + levels.map(function (l) {
+      return '<option value="' + l + '"' + (String(l) === String(view.level) ? " selected" : "") + ">Lv " + l + "</option>";
+    }).join("");
+    if (levels.indexOf(Number(view.level)) === -1) view.level = "all";
+  }
+
+  function renderSummary() {
+    var all = index[view.diff].charts;
+    var n = countsFor(all);
+    var total = all.length || 1;
+    el.barClear.style.width = ((n[1] + n[2] + n[3]) / total * 100) + "%";
+    el.barFc.style.width = ((n[2] + n[3]) / total * 100) + "%";
+    el.barAp.style.width = (n[3] / total * 100) + "%";
+    el.legend.innerHTML =
+      '<span><i style="background:var(--none)"></i>未 <b>' + n[0] + "</b></span>" +
+      '<span><i style="background:var(--clear)"></i>クリア以上 <b>' + (n[1] + n[2] + n[3]) + "</b></span>" +
+      '<span><i style="background:var(--fc)"></i>フルコン以上 <b>' + (n[2] + n[3]) + "</b></span>" +
+      '<span><i style="background:var(--ap)"></i>AP <b>' + n[3] + "</b></span>" +
+      "<span>合計 <b>" + all.length + "</b></span>";
+  }
+
+  function renderList() {
+    var charts = visibleCharts();
+    if (!charts.length) {
+      el.list.innerHTML = '<p class="empty">条件に合う譜面がありません。</p>';
+      return;
+    }
+    var groups = {};
+    charts.forEach(function (c) { (groups[c.level] = groups[c.level] || []).push(c); });
+    var levels = Object.keys(groups).map(Number).sort(function (a, b) { return view.desc ? b - a : a - b; });
+
+    el.list.innerHTML = levels.map(function (level) {
+      var rows = groups[level];
+      var n = countsFor(rows);
+      var done = n[1] + n[2] + n[3];
+      var pct = Math.round(done / rows.length * 100);
+      return '<section class="level">' +
+        '<div class="level-head">' +
+          '<span class="level-no"><small>Lv</small>' + level + "</span>" +
+          '<span class="level-bar bar" aria-hidden="true">' +
+            '<span class="s1" style="width:' + (done / rows.length * 100) + '%"></span>' +
+            '<span class="s2" style="width:' + ((n[2] + n[3]) / rows.length * 100) + '%"></span>' +
+            '<span class="s3" style="width:' + (n[3] / rows.length * 100) + '%"></span>' +
+          "</span>" +
+          '<span class="level-stat">' + done + "/" + rows.length + " · " + pct + "%</span>" +
+          '<button class="fill-btn" data-fill="' + level + '">全クリア</button>' +
+        "</div>" +
+        '<div class="rows">' + rows.map(function (c) {
+          var v = clearOf(view.diff, c.id);
+          return '<button class="row" data-id="' + c.id + '" data-clear="' + v +
+            '" aria-label="' + esc(c.title) + " " + DIFF_SHORT[view.diff] + " " + level + " " + CLEAR_NAME[v] + '">' +
+            '<span class="badge">' + CLEAR_BADGE[v] + "</span>" +
+            '<span class="title">' + esc(c.title) + "</span>" +
+            '<span class="notes">' + c.notes + "</span></button>";
+        }).join("") + "</div></section>";
+    }).join("");
+  }
+
+  function render() {
+    renderTabs();
+    renderLevelPick();
+    renderSummary();
+    renderList();
+  }
+
+  /* --------------------------------------------------------------- input */
+
+  el.tabs.addEventListener("click", function (e) {
+    var tab = e.target.closest(".tab");
+    if (!tab) return;
+    view.diff = tab.dataset.diff;
+    view.level = "all";
+    armedLevel = null;
+    render();
+    window.scrollTo({ top: 0 });
+  });
+
+  el.list.addEventListener("click", function (e) {
+    var fill = e.target.closest("[data-fill]");
+    if (fill) {
+      var level = Number(fill.dataset.fill);
+      if (armedLevel !== level) {
+        if (armedLevel !== null) render();
+        armedLevel = level;
+        fill.classList.add("armed");
+        fill.textContent = "全部クリアに？";
+        setTimeout(function () {
+          if (armedLevel === level) { armedLevel = null; render(); }
+        }, 4000);
+        return;
+      }
+      armedLevel = null;
+      index[view.diff].charts.forEach(function (c) {
+        if (c.level === level && clearOf(view.diff, c.id) === 0) setClear(view.diff, c.id, 1);
+      });
+      render();
+      return;
+    }
+    var row = e.target.closest(".row");
+    if (!row) return;
+    var id = Number(row.dataset.id);
+    var next = (Number(row.dataset.clear) + 1) % 4;
+    setClear(view.diff, id, next);
+    row.dataset.clear = next;
+    row.querySelector(".badge").textContent = CLEAR_BADGE[next];
+    renderSummary();
+    var head = row.closest(".level");
+    if (head) {
+      var level = Number(head.querySelector(".level-no").textContent.replace(/\D/g, ""));
+      var rows = visibleCharts().filter(function (c) { return c.level === level; });
+      if (rows.length) {
+        var n = countsFor(rows);
+        var done = n[1] + n[2] + n[3];
+        head.querySelector(".level-stat").textContent = done + "/" + rows.length + " · " + Math.round(done / rows.length * 100) + "%";
+        var bars = head.querySelectorAll(".level-bar span");
+        bars[0].style.width = (done / rows.length * 100) + "%";
+        bars[1].style.width = ((n[2] + n[3]) / rows.length * 100) + "%";
+        bars[2].style.width = (n[3] / rows.length * 100) + "%";
+      }
+    }
+  });
+
+  var qTimer = null;
+  el.q.addEventListener("input", function () {
+    if (qTimer) clearTimeout(qTimer);
+    qTimer = setTimeout(function () { view.q = el.q.value; renderList(); }, 140);
+  });
+
+  el.todo.addEventListener("click", function () {
+    view.todoOnly = !view.todoOnly;
+    el.todo.setAttribute("aria-pressed", String(view.todoOnly));
+    renderList();
+  });
+
+  el.sort.addEventListener("click", function () {
+    view.desc = !view.desc;
+    el.sort.setAttribute("aria-pressed", String(view.desc));
+    el.sort.innerHTML = view.desc ? "Lv&nbsp;↓" : "Lv&nbsp;↑";
+    renderList();
+  });
+
+  el.levelPick.addEventListener("change", function () {
+    view.level = el.levelPick.value;
+    renderList();
+  });
+
+  /* -------------------------------------------------------------- export */
+
+  function buildCsv() {
+    var lines = ["music_id,title,difficulty,clear,score"];
+    var titles = {};
+    DIFF_ORDER.forEach(function (d) {
+      index[d].charts.forEach(function (c) { titles[c.id] = c.title; });
+    });
+    DIFF_ORDER.forEach(function (diff) {
+      var bucket = clears[diff] || {};
+      Object.keys(bucket).map(Number).sort(function (a, b) { return a - b; }).forEach(function (id) {
+        var v = bucket[id];
+        if (!v) return;
+        var title = (titles[id] || "").replace(/"/g, '""');
+        lines.push(id + ',"' + title + '",' + diff + "," + CLEAR_CODES[v] + ",");
+      });
+    });
+    return lines.join("\n") + "\n";
+  }
+
+  el.exportBtn.addEventListener("click", function () {
+    el.csv.value = buildCsv();
+    el.sheet.hidden = false;
+    el.csv.focus();
+    el.csv.select();
+  });
+
+  el.closeBtn.addEventListener("click", function () { el.sheet.hidden = true; });
+  el.sheet.addEventListener("click", function (e) { if (e.target === el.sheet) el.sheet.hidden = true; });
+
+  el.copyBtn.addEventListener("click", function () {
+    var done = function () { el.copyBtn.textContent = "コピーしました"; setTimeout(function () { el.copyBtn.textContent = "コピー"; }, 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(el.csv.value).then(done, function () { el.csv.select(); });
+    } else { el.csv.select(); }
+  });
+
+  if (window.claude && window.claude.use) {
+    window.claude.use("downloads").then(function (downloads) {
+      if (!downloads) return;
+      el.saveBtn.hidden = false;
+      el.saveBtn.addEventListener("click", function () {
+        downloads.save({ filename: "proseka-plays.csv", data: el.csv.value })
+          .catch(function () { el.saveBtn.textContent = "保存できません"; });
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------------- boot */
+
+  clears = readLocal();
+
+  fetch("data/charts.json").then(function (r) {
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  }).then(function (payload) {
+    data = payload;
+    buildIndex();
+    el.stamp.textContent = data.region.toUpperCase() + " · " + data.songs.length + "曲 · " + data.generatedAt;
+    render();
+    connect();
+  }).catch(function () {
+    el.list.innerHTML = '<p class="empty">譜面データを読み込めませんでした。ページを再読み込みしてください。</p>';
+  });
+})();
+</script>
